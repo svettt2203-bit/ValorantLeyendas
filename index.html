@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEYENDA — Modo Carrera Valorant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scan"></div>
+
+<!-- ============ PANTALLA 0: PORTADA / CREACIÓN ============ -->
+<section id="screen-intro" class="screen active">
+  <div class="wrap">
+    <div class="eyebrow">MODO CARRERA</div>
+    <h1 class="title">LEYENDA<span class="dot">.</span></h1>
+    <p class="subtitle">Arrancás a los 16 jugando Iron con tus amigos. ¿Vas a clasificar a Champions o te vas a quemar en el camino?</p>
+    <p class="subtitle small">Sin final fijo: a partir de los 30 vos decidís cuándo colgar el mouse.</p>
+
+    <form id="create-form" autocomplete="off">
+      <label class="field-label" for="nickname">Tu nickname</label>
+      <input type="text" id="nickname" maxlength="16" placeholder="ej: zeqta" required>
+
+      <label class="field-label">Tu rol en el equipo</label>
+      <div class="role-grid" id="role-grid"><!-- roles inyectados por JS --></div>
+
+      <p class="role-desc" id="role-desc">Elegí un rol para ver su descripción.</p>
+
+      <label class="field-label">Tu género</label>
+      <div class="role-grid" id="gender-grid"><!-- géneros inyectados por JS --></div>
+      <p class="role-desc" id="gender-desc">Define a qué circuito competitivo entrás: no hay equipos mixtos en la escena.</p>
+
+      <button type="submit" class="btn-primary" id="btn-play" disabled>JUGAR</button>
+    </form>
+
+    <div class="howto">
+      <h2>Cómo funciona el juego</h2>
+      <div class="howto-grid">
+        <div><b>Modo carrera</b><p>Arrancás a los 16 jugando Iron con tus amigos. No hay un final fijo: tomás decisiones turno a turno y tu carrera se arma sola, para bien o para mal.</p></div>
+        <div><b>Turnos y edad</b><p>Cada turno es un evento de tu carrera (partido, torneo, decisión personal). Pasan 2 turnos por año, así que tu edad sube sola.</p></div>
+        <div><b>Etapas de la escena</b><p>Tu nivel va subiendo: Iron/Bronze → Silver/Gold → Plat/Diamond (Amateur) → Ascendant/Immortal (Challengers) → Radiant (VCT Internacional) → Clasificado a Champions.</p></div>
+        <div><b>Rol y stats</b><p>El rol que elegís define bonus y penalidades en aim, game sense, química, popularidad, salud mental y rating.</p></div>
+        <div><b>Torneos, tienda y decisiones</b><p>Además de jugar partidos, vas a enfrentar minijuegos de reflejos y decisiones que afectan tus stats, y podés gastar la plata que ganás en la tienda.</p></div>
+        <div><b>Retiro</b><p>A partir de los 30 sos vos quien decide cuándo guardar el mouse y cerrar la carrera.</p></div>
+      </div>
+    </div>
+
+    <div class="achv-preview">
+      <h2>Tus Logros (<span id="achv-count">0</span>/12)</h2>
+      <div class="achv-grid" id="achv-grid-intro"><!-- inyectado por JS --></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PANTALLA 1: JUEGO ============ -->
+<section id="screen-game" class="screen">
+  <header class="hud">
+    <div class="hud-id">
+      <div class="hud-name" id="hud-name">—</div>
+      <div class="hud-role" id="hud-role">—</div>
+    </div>
+    <div class="hud-rank">
+      <div class="rank-badge" id="rank-badge">IRON</div>
+      <div class="rank-stage" id="rank-stage-label">Ranked con los pibes</div>
+    </div>
+    <div class="hud-team" id="hud-team"><span class="hud-team-name free-agent">Free agent</span></div>
+    <div class="hud-meta">
+      <div><span id="hud-age">16</span> años</div>
+      <div>Turno <span id="hud-turn">0</span></div>
+      <div>$<span id="hud-money">0</span></div>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="stats-bar"><!-- barras de stats inyectadas --></div>
+
+  <main class="event-area">
+    <div class="event-card" id="event-card">
+      <div class="event-tag" id="event-tag">EVENTO</div>
+      <p class="event-text" id="event-text">Cargando tu carrera…</p>
+      <div class="event-choices" id="event-choices"></div>
+    </div>
+
+    <div class="log" id="log"><div class="log-title">Bitácora</div><ul id="log-list"></ul></div>
+  </main>
+
+  <footer class="actions">
+    <button class="btn-ghost" id="btn-shop">TIENDA</button>
+    <button class="btn-ghost btn-retire" id="btn-retire" style="display:none;">RETIRARME</button>
+  </footer>
+</section>
+
+<!-- ============ PANTALLA 2: FINAL ============ -->
+<section id="screen-end" class="screen">
+  <div class="wrap">
+    <div class="eyebrow">FIN DE CARRERA</div>
+    <h1 class="title" id="end-title">CARRERA TERMINADA</h1>
+    <p class="subtitle" id="end-summary"></p>
+
+    <div class="end-stats" id="end-stats"></div>
+
+    <div class="unlocked-achv" id="unlocked-achv"></div>
+
+    <button class="btn-primary" id="btn-restart">JUGAR OTRA VEZ</button>
+
+    <div class="achv-preview">
+      <h2>Tus Logros (<span id="achv-count-2">0</span>/12)</h2>
+      <div class="achv-grid" id="achv-grid-end"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODAL: TIENDA ============ -->
+<div class="modal-backdrop" id="shop-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <span>TIENDA</span>
+      <button class="modal-close" id="shop-close">✕</button>
+    </div>
+    <p class="modal-money">Tenés $<span id="shop-money">0</span></p>
+    <div class="shop-grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<!-- ============ MODAL: MINIJUEGO DE REFLEJOS ============ -->
+<div class="modal-backdrop" id="reflex-modal">
+  <div class="modal modal-reflex">
+    <div class="modal-head"><span>MINIJUEGO — CLUTCH</span></div>
+    <p class="reflex-instructions" id="reflex-instructions">Hacé click en el objetivo apenas aparezca.</p>
+    <div class="reflex-field" id="reflex-field">
+      <div class="reflex-target" id="reflex-target"></div>
+    </div>
+    <p class="reflex-result" id="reflex-result"></p>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
