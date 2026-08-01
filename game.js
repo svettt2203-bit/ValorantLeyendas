@@ -28,6 +28,24 @@
       bonus: { gameSense: 10, aim: -8, chemistry: 4 } },
   ];
 
+  const ARCHETYPES = [
+    { id: "normal", name: "Normal", tag: "Uno más del montón",
+      desc: "Arrancás como cualquier pibe o piba que labura para llegar. Stats parejas, sin atajos ni ventajas raras." ,
+      bonus: {} },
+    { id: "prodigy", name: "Prodigio", tag: "Talento crudo",
+      desc: "Naciste con un don que la mayoría no tiene: mira y lectura de juego muy por encima del resto desde el día uno. El precio es la presión constante — todos esperan que seas la próxima gran cosa, y eso pesa.",
+      bonus: { aim: 12, gameSense: 8, mental: -15 } },
+  ];
+
+  // Agentes disponibles como "main" según el rol elegido en la creación.
+  const AGENTS = {
+    duelist:    ["Jett", "Raze", "Reyna", "Phoenix", "Neon", "Yoru", "Iso", "Waylay"],
+    initiator:  ["Sova", "Skye", "Breach", "KAY/O", "Fade", "Gekko", "Tejo"],
+    controller: ["Omen", "Brimstone", "Viper", "Astra", "Harbor", "Clove", "Miks"],
+    sentinel:   ["Killjoy", "Cypher", "Sage", "Chamber", "Deadlock", "Vyse", "Veto"],
+    igl:        ["Omen", "Sova", "Killjoy", "Brimstone", "Astra", "Miks"],
+  };
+
   const GENDERS = [
     { id: "masc",      label: "Masculino",           circuit: "open", pronoun: "amigos",
       flavor: "Entrás directo al circuito abierto: el calendario grande de VCT, el más saturado de competencia." },
@@ -158,14 +176,14 @@
       const t = tiers[i];
       return {
         label: `Firmás con ${team}`,
-        hint: `${t.desc} · +💰$${t.money} · sueldo $${t.salary}/paga`,
+        note: t.desc,
         team, salary: t.salary,
         fx: Object.assign({ money: t.money }, t.fx),
       };
     });
     choices.push({
       label: "Rechazás las tres ofertas, por ahora",
-      hint: "Seguís independiente. +🧠 mental",
+      note: "Seguís independiente.",
       fx: { mental: 3 },
     });
     return choices;
@@ -175,11 +193,11 @@
     // --- Etapa 0-1: arrancando ---
     { id:"e1", tag:"VIDA PERSONAL", min:0, max:1, text:"Tus viejos te dicen que el Valorant te va a arruinar la vista y las notas. Insistís en jugar dos horas más antes de cenar.",
       choices:[
-        {label:"Les hacés caso y apagás la PC", hint:"+🕊️ paz en casa, -📉 practica", fx:{mental:5,chemistry:-1,gameSense:1}},
+        {label:"Les hacés caso y apagás la PC", hint:"+🧠 mental, -📉 practica", fx:{mental:5,chemistry:-1,gameSense:1}},
         {label:"Decís 'ya voy' y seguís jugando", hint:"+🎯 aim, -🧠 mental", fx:{aim:4,mental:-3,chemistry:1}},
         {label:"Negociás media hora más y después apagás", hint:"punto medio", fx:{aim:2,mental:1,chemistry:1}},
       ]},
-    { id:"e2", tag:"RANKED", min:0, max:1, text:"Un random del ranked te empieza a puentear por el chat de voz porque 'no rotaste a tiempo'.",
+    { id:"e2", tag:"RANKED", min:0, max:1, text:"Un random del ranked te empieza a putear por el chat de voz porque 'no rotaste a tiempo'.",
       choices:[
         {label:"Le silenciás el mic y seguís tu juego", hint:"+😌 calma", fx:{mental:3,chemistry:-1}},
         {label:"Le contestás con la misma", hint:"+📢 popularidad, -🧠 mental", fx:{mental:-4,popularity:2}},
@@ -197,9 +215,9 @@
         {label:"Preferís solo fraguear", hint:"+🎯 aim", fx:{aim:3,gameSense:-1}},
         {label:"Proponés turnarse el rol de IGL entre todos", hint:"+🧭 game sense, +🤝 química, suave", fx:{gameSense:2,chemistry:2}},
       ]},
-    { id:"e5", tag:"META", min:0, max:1, text:"Sale un parche grande que cambia el meta de agentes. Tu main queda nerfeado.",
+    { id:"e5", tag:"META", min:0, max:1, text:"Sale un parche grande que cambia el meta de agentes. Tu main, {MAIN}, queda nerfeado.",
       choices:[
-        {label:"Te adaptás y probás agentes nuevos", hint:"+🧭 game sense, -🎯 aim", fx:{gameSense:4,aim:-2}},
+        {label:"Te adaptás y probás agentes nuevos", hint:"+🧭 game sense, -🎯 aim", fx:{gameSense:4,aim:-2}, changeMain:true},
         {label:"Seguís con tu main igual, por códigos", hint:"-🤝 química, +🧠 mental", fx:{chemistry:-2,mental:3}},
         {label:"Probás el agente nuevo solo en customs", hint:"cauteloso", fx:{gameSense:2,aim:-1,mental:1}},
       ]},
@@ -241,12 +259,12 @@
         {label:"Rechazás, la exposición te da paja", hint:"+🧠 mental", fx:{mental:2}},
         {label:"Aceptás pero pedís que no muestren tu cara", hint:"+📢 popularidad, sin exponerte tanto", fx:{popularity:4}},
       ]},
-    { id:"e12", tag:"EQUIPO", min:1, max:2, text:"Se arma drama en el Discord del equipo por quién decide el pick de mapas.",
-      choices:[
-        {label:"Mediás la discusión con calma", hint:"+🤝 química, +🧭 game sense", fx:{chemistry:5,gameSense:2}},
-        {label:"Te quedás al margen", hint:"-🤝 química", fx:{chemistry:-1}},
-        {label:"Proponés votar el pick entre todos", hint:"+🤝 química, +🧭 game sense", fx:{chemistry:3,gameSense:1}},
-      ]},
+   { id:"e12", tag:"EQUIPO", min:1, max:2, text:"Se arma drama en el Discord del equipo por quién decide el pick de mapas.",
+  choices:[
+    {label:"Mediás la discusión con calma", hint:"+🤝 química, +🧭 game sense", fx:{chemistry:5,gameSense:2}},
+    {label:"Te quedás al margen", hint:"-🤝 química, +🧭 game sense", fx:{chemistry:-2,gameSense:1}},
+    {label:"Proponés votar el pick entre todos", hint:"+🤝 química", fx:{chemistry:3,gameSense:0}},
+     ]},
 
     // --- Etapa 2-3: circuito amateur / challengers ---
     { id:"e13", tag:"BOOTCAMP", min:2, max:3, text:"Te seleccionan para un bootcamp de una semana antes de un Open Qualifier.",
@@ -362,12 +380,12 @@
   ];
 
   const SHOP_ITEMS = [
-    { id:"psych", name:"🧑‍⚕️ Sesión con psicólogo deportivo", desc:"+15 🧠 salud mental", cost:80, max:3, fx:{mental:15} },
-    { id:"coach", name:"📋 Coach personalizado", desc:"+10 🧭 game sense", cost:100, max:3, fx:{gameSense:10} },
-    { id:"gear",  name:"🖱️ Setup gamer premium", desc:"+8 🎯 aim", cost:60, max:3, fx:{aim:8} },
-    { id:"editor",name:"🎬 Editor de highlights", desc:"+10 📢 popularidad", cost:50, max:3, fx:{popularity:10} },
-    { id:"team",  name:"🤝 Team building con el equipo", desc:"+12 🤝 química", cost:70, max:3, fx:{chemistry:12} },
-    { id:"vacay", name:"🏖️ Vacaciones forzadas", desc:"+8 🧠 mental, -3 🎯 aim (te oxidás)", cost:40, max:3, fx:{mental:8,aim:-3} },
+    { id:"psych", name:"🧑‍⚕️ Sesión con psicólogo deportivo", cost:150, costMult:1.7, max:3, fx:{mental:15} },
+    { id:"coach", name:"📋 Coach personalizado", cost:180, costMult:1.7, max:3, fx:{gameSense:10} },
+    { id:"gear",  name:"🖱️ Setup gamer premium", cost:120, costMult:1.7, max:3, fx:{aim:8} },
+    { id:"editor",name:"🎬 Editor de highlights", cost:100, costMult:1.7, max:3, fx:{popularity:10} },
+    { id:"team",  name:"🤝 Team building con el equipo", cost:140, costMult:1.7, max:3, fx:{chemistry:12} },
+    { id:"vacay", name:"🏖️ Vacaciones forzadas", cost:90, costMult:1.7, max:3, fx:{mental:8,aim:-3}, note:"te oxidás un poco" },
   ];
 
   const ACHIEVEMENTS = [
@@ -417,13 +435,16 @@
 
   let state = null;
 
-  function freshState(nickname, roleId, genderId) {
+  function freshState(nickname, roleId, genderId, archetypeId, mainAgent) {
     const role = ROLES.find(r => r.id === roleId);
     const gender = GENDERS.find(g => g.id === genderId);
+    const archetype = ARCHETYPES.find(a => a.id === archetypeId) || ARCHETYPES[0];
     const stats = { aim:50, gameSense:50, chemistry:50, popularity:50, mental:50, rating:50 };
     for (const k in role.bonus) stats[k] = clamp(stats[k] + role.bonus[k]);
+    for (const k in archetype.bonus) stats[k] = clamp(stats[k] + archetype.bonus[k]);
     return {
       nickname, role: roleId, gender: genderId, circuit: gender.circuit,
+      archetype: archetypeId, main: mainAgent,
       turn: 0, age: 16,
       stats,
       money: 20,
@@ -490,6 +511,8 @@
 
   let selectedRole = null;
   let selectedGender = null;
+  let selectedArchetype = null;
+  let selectedMain = null;
 
   function renderRoleGrid() {
     const grid = $("#role-grid");
@@ -504,10 +527,57 @@
         $all("#role-grid .role-card").forEach(c => c.classList.remove("selected"));
         div.classList.add("selected");
         $("#role-desc").textContent = r.desc;
+        renderMainGrid(r.id);
         validateForm();
       });
       grid.appendChild(div);
     });
+  }
+
+  function renderArchetypeGrid() {
+    const grid = $("#archetype-grid");
+    grid.innerHTML = "";
+    ARCHETYPES.forEach(a => {
+      const div = document.createElement("div");
+      div.className = "role-card";
+      div.dataset.archetype = a.id;
+      div.innerHTML = `<span class="r-tag">${a.tag}</span><span class="r-name">${a.name}</span>`;
+      div.addEventListener("click", () => {
+        selectedArchetype = a.id;
+        $all("#archetype-grid .role-card").forEach(c => c.classList.remove("selected"));
+        div.classList.add("selected");
+        $("#archetype-desc").textContent = a.desc;
+        validateForm();
+      });
+      grid.appendChild(div);
+    });
+  }
+
+  function renderMainGrid(roleId) {
+    const grid = $("#main-grid");
+    grid.innerHTML = "";
+    selectedMain = null;
+    if (!roleId) {
+      $("#main-desc").textContent = "Elegí un rol primero para ver tus opciones de main.";
+      validateForm();
+      return;
+    }
+    const agents = AGENTS[roleId] || [];
+    agents.forEach(name => {
+      const div = document.createElement("div");
+      div.className = "role-card";
+      div.dataset.main = name;
+      div.innerHTML = `<span class="r-name">${name}</span>`;
+      div.addEventListener("click", () => {
+        selectedMain = name;
+        $all("#main-grid .role-card").forEach(c => c.classList.remove("selected"));
+        div.classList.add("selected");
+        $("#main-desc").textContent = `Tu main: ${name}.`;
+        validateForm();
+      });
+      grid.appendChild(div);
+    });
+    $("#main-desc").textContent = "Elegí tu main entre las opciones de tu rol.";
   }
 
   function renderGenderGrid() {
@@ -532,23 +602,25 @@
 
   function validateForm() {
     const nickOk = $("#nickname").value.trim().length > 0;
-    $("#btn-play").disabled = !(nickOk && selectedRole && selectedGender);
+    $("#btn-play").disabled = !(nickOk && selectedRole && selectedGender && selectedArchetype && selectedMain);
   }
 
   function initIntro() {
     renderRoleGrid();
     renderGenderGrid();
+    renderArchetypeGrid();
+    renderMainGrid(null);
     refreshAchvCounters();
     $("#nickname").addEventListener("input", validateForm);
     $("#create-form").addEventListener("submit", e => {
       e.preventDefault();
       const nickname = $("#nickname").value.trim() || "Player";
-      state = freshState(nickname, selectedRole, selectedGender);
+      state = freshState(nickname, selectedRole, selectedGender, selectedArchetype, selectedMain);
       const gender = GENDERS.find(g => g.id === selectedGender);
       showScreen("screen-game");
       renderHUD();
       $("#log-list").innerHTML = "";
-      addLog(`🔫 A los 16, con el corazón en la boca, entrás a tu primera ranked con tus ${gender.pronoun}. Nadie sabe todavía en qué te vas a convertir.`);
+      addLog(`🔫 A los 16, con el corazón en la boca, entrás a tu primera ranked con tus ${gender.pronoun}. Main: ${selectedMain}. Nadie sabe todavía en qué te vas a convertir.`);
       nextTurn();
     });
   }
@@ -567,7 +639,7 @@
   function renderHUD() {
     $("#hud-name").textContent = state.nickname;
     const role = ROLES.find(r => r.id === state.role);
-    $("#hud-role").textContent = role.name.toUpperCase();
+    $("#hud-role").textContent = `${role.name.toUpperCase()}${state.main ? " · " + state.main : ""}`;
     const stages = stagesFor(state.circuit);
     $("#rank-badge").textContent = stages[state.stage].badge;
     $("#rank-stage-label").textContent = stages[state.stage].name;
@@ -595,6 +667,32 @@
     ["aim","AIM"], ["gameSense","GAME SENSE"], ["chemistry","QUÍMICA"],
     ["popularity","POPULARIDAD"], ["mental","SALUD MENTAL"], ["rating","RATING"],
   ];
+
+  const STAT_LABELS = {
+    aim: "AIM", gameSense: "GAME SENSE", chemistry: "QUÍMICA",
+    popularity: "POPULARIDAD", mental: "SALUD MENTAL", rating: "RATING",
+  };
+
+  // Genera el texto de consecuencias siempre con el mismo formato: signo, monto
+  // exacto y el nombre de stat tal cual aparece en las barras del HUD.
+  function fxToHint(fx, extra) {
+    const parts = [];
+    if (fx) {
+      for (const k in fx) {
+        if (k === "resultText") continue;
+        if (k === "money") {
+          if (fx.money) parts.push(`${fx.money > 0 ? "+" : ""}${fx.money} PLATA`);
+          continue;
+        }
+        if (k in STAT_LABELS && fx[k]) {
+          parts.push(`${fx[k] > 0 ? "+" : ""}${fx[k]} ${STAT_LABELS[k]}`);
+        }
+      }
+    }
+    let out = parts.join(" · ");
+    if (extra) out = out ? `${out} · ${extra}` : extra;
+    return out || "Sin efecto directo en stats.";
+  }
 
   function renderStats() {
     const bar = $("#stats-bar");
@@ -642,7 +740,8 @@
     } else {
       const teamName = pickTeamName(state.circuit);
       const usesTeam = ev.text.includes("{TEAM}");
-      const text = usesTeam ? ev.text.replaceAll("{TEAM}", teamName) : ev.text;
+      let text = usesTeam ? ev.text.replaceAll("{TEAM}", teamName) : ev.text;
+      if (text.includes("{MAIN}")) text = text.replaceAll("{MAIN}", state.main || "tu main");
       $("#event-tag").textContent = ev.tag;
       $("#event-text").textContent = text;
       if (ev.showLogo && usesTeam) logoHeaderTeam = teamName;
@@ -670,10 +769,29 @@
       const btn = document.createElement("button");
       btn.className = "choice-btn" + (c.team ? " has-logo" : "");
       const logoHtml = c.team ? teamLogoBadge(c.team, 30) : "";
-      btn.innerHTML = `${logoHtml}<span class="c-label-wrap"><span class="c-label">${c.label}</span><span class="c-hint">${c.hint || ""}</span></span>`;
+      const extraBits = [];
+      if (c.note) extraBits.push(c.note);
+      if (c.salary != null) extraBits.push(`sueldo $${c.salary}/paga`);
+      const hintText = fxToHint(c.fx, extraBits.join(" · "));
+      btn.innerHTML = `${logoHtml}<span class="c-label-wrap"><span class="c-label">${c.label}</span><span class="c-hint">${hintText}</span></span>`;
       btn.addEventListener("click", () => {
         applyEffects(c.fx);
-        if (c.rage) state.rageBreaks++;
+        if (c.rage) {
+          state.rageBreaks++;
+          if (Math.random() < 0.4) {
+            const cost = 20 + Math.floor(Math.random() * 40);
+            state.money = Math.max(0, state.money - cost);
+            addLog(`💥 Te mandaste una piña al monitor y se rajó. Te salió $${cost} arreglarlo o comprar otro.`);
+          }
+        }
+        if (c.changeMain) {
+          const pool = (AGENTS[state.role] || []).filter(a => a !== state.main);
+          if (pool.length) {
+            const oldMain = state.main;
+            state.main = pool[Math.floor(Math.random() * pool.length)];
+            addLog(`🔁 Cambiaste de main: dejás a <b>${oldMain}</b> y pasás a <b>${state.main}</b>.`);
+          }
+        }
         if (c.team && c.salary != null) {
           state.team = c.team;
           state.salary = c.salary;
@@ -688,7 +806,7 @@
     });
   }
 
-  function renderSingleContinue(tag, text, onContinue) {
+  function renderSingleContinue(tag, text, onContinue, btnLabel) {
     const existingHeader = $("#event-card").querySelector(".event-team-header");
     if (existingHeader) existingHeader.remove();
     $("#event-tag").textContent = tag;
@@ -697,7 +815,7 @@
     choicesDiv.innerHTML = "";
     const btn = document.createElement("button");
     btn.className = "choice-btn";
-    btn.textContent = "Continuar";
+    btn.textContent = btnLabel || "Continuar";
     btn.addEventListener("click", onContinue);
     choicesDiv.appendChild(btn);
   }
@@ -785,14 +903,18 @@
   function triggerReflex() {
     const existingHeader = $("#event-card").querySelector(".event-team-header");
     if (existingHeader) existingHeader.remove();
-    $("#event-tag").textContent = "MOMENTO CLUTCH";
-    $("#event-text").textContent = "Se te viene un 1vX. Prestá atención al modal de reflejos.";
-    $("#event-choices").innerHTML = "";
-    openReflexModal(fx => {
-      applyEffects(fx);
-      renderHUD();
-      renderSingleContinue("MOMENTO CLUTCH", fx.resultText, () => nextTurn());
-    });
+    renderSingleContinue(
+      "MOMENTO CLUTCH",
+      "Se te viene un 1vX. Cuando confirmes, va a aparecer un círculo rojo en algún punto del cuadro del minijuego — hacé click apenas lo veas. Confirmá solo cuando estés list@.",
+      () => {
+        openReflexModal(fx => {
+          applyEffects(fx);
+          renderHUD();
+          renderSingleContinue("MOMENTO CLUTCH", fx.resultText, () => nextTurn());
+        });
+      },
+      "Confirmar y jugar el clutch"
+    );
   }
 
   /* ---------------------------------------------------------
@@ -851,8 +973,8 @@
         fx = { aim: 1 };
         msg = `Llegaste justo (${Math.round(reactionMs)}ms). Ronda pareja.`;
       }
-      fx.resultText = msg;
-      result.textContent = msg;
+      fx.resultText = `${msg} (${fxToHint(fx)})`;
+      result.textContent = fx.resultText;
       setTimeout(() => {
         modal.classList.remove("active");
         onDone(fx);
@@ -870,17 +992,19 @@
     grid.innerHTML = "";
     SHOP_ITEMS.forEach(item => {
       const bought = state.shopPurchases[item.id] || 0;
+      const currentCost = Math.round(item.cost * Math.pow(item.costMult || 1, bought));
       const div = document.createElement("div");
       div.className = "shop-item";
-      const disabled = bought >= item.max || state.money < item.cost;
-      div.innerHTML = `<div><div class="s-name">${item.name}</div><div class="s-desc">${item.desc} · $${item.cost} · ${bought}/${item.max} usados</div></div>
+      const disabled = bought >= item.max || state.money < currentCost;
+      const hint = fxToHint(item.fx, item.note);
+      div.innerHTML = `<div><div class="s-name">${item.name}</div><div class="s-desc">${hint} · $${currentCost} · ${bought}/${item.max} usados</div></div>
         <button class="shop-buy" ${disabled ? "disabled" : ""}>Comprar</button>`;
       div.querySelector("button").addEventListener("click", () => {
-        if (state.money < item.cost || bought >= item.max) return;
-        state.money -= item.cost;
+        if (state.money < currentCost || bought >= item.max) return;
+        state.money -= currentCost;
         state.shopPurchases[item.id] = bought + 1;
         applyEffects(item.fx);
-        addLog(`<b>TIENDA:</b> compraste "${item.name}".`);
+        addLog(`<b>TIENDA:</b> compraste "${item.name}" por $${currentCost}.`);
         renderHUD();
         renderShop();
       });
@@ -980,10 +1104,14 @@
     $("#btn-restart").addEventListener("click", () => {
       selectedRole = null;
       selectedGender = null;
+      selectedArchetype = null;
+      selectedMain = null;
       $("#nickname").value = "";
       $all(".role-card").forEach(c => c.classList.remove("selected"));
       $("#role-desc").textContent = "Elegí un rol para ver su descripción.";
       $("#gender-desc").textContent = "Elegí una identidad para ver a qué circuito competitivo entrás: no hay equipos mixtos en la escena.";
+      $("#archetype-desc").textContent = "Elegí cómo arrancás tu carrera.";
+      renderMainGrid(null);
       $("#btn-play").disabled = true;
       refreshAchvCounters();
       showScreen("screen-intro");
