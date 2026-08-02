@@ -377,15 +377,85 @@
       text:"Varias academias te contactan para un tryout en su roster de desarrollo. Elegís con cuál probar suerte." },
     { id:"e30", tag:"FICHAJE", min:4, max:5, dynamic:"teamOffer", offerType:"main",
       text:"Tres organizaciones te ofrecen un lugar en su roster titular justo antes de la temporada grande." },
+
+    // --- Entrevista de prensa: varias preguntas seguidas ---
+    { id:"e31", tag:"ENTREVISTA", min:1, max:5, dynamic:"interview",
+      text:"Te sientan frente a cámara para una nota de la escena. Van a ser varias preguntas seguidas." },
   ];
 
+  // Banco de preguntas para la sección de entrevista. En cada entrevista se
+  // eligen 5 o 6 al azar, sin repetir, y se muestran una por una.
+  const INTERVIEW_QUESTIONS = [
+    { q:"¿Cómo describirías tu nivel de juego ahora mismo?",
+      choices:[
+        {label:"Con total confianza: 'soy de los mejores'", hint:"+📢 popularidad, -🧠 mental", fx:{popularity:5,mental:-2}},
+        {label:"Con humildad: 'me falta mucho todavía'", hint:"+🧠 mental", fx:{mental:3}},
+        {label:"Con datos: hablás de tu rating y tus números", hint:"+🧭 game sense, +📢 popularidad leve", fx:{gameSense:2,popularity:2}},
+      ]},
+    { q:"¿Qué le dirías a la gente que te critica en redes?",
+      choices:[
+        {label:"Los ignorás por completo", hint:"+🧠 mental", fx:{mental:4}},
+        {label:"Les contestás con una frase picante", hint:"+📢 popularidad, -🤝 química", fx:{popularity:5,chemistry:-2}},
+        {label:"Agradecés la crítica constructiva", hint:"+🤝 química", fx:{chemistry:3}},
+      ]},
+    { q:"¿Cómo es la relación con tus compañeros de equipo?",
+      choices:[
+        {label:"'Somos una familia', decís sin dudar", hint:"+🤝 química, +📢 popularidad", fx:{chemistry:4,popularity:2}},
+        {label:"Sos honesto/a: 'a veces chocamos, pero funciona'", hint:"+🧭 game sense", fx:{gameSense:2,chemistry:1}},
+        {label:"Evitás el tema y cambiás de rumbo", hint:"sin efecto real", fx:{popularity:1}},
+      ]},
+    { q:"¿Cómo llevás la presión de los torneos grandes?",
+      choices:[
+        {label:"Admitís que a veces no dormís de los nervios", hint:"+📢 popularidad, -🧠 mental leve", fx:{popularity:4,mental:-1}},
+        {label:"Decís que ya te acostumbraste", hint:"+🧠 mental", fx:{mental:3}},
+        {label:"Contás tu rutina con el psicólogo del equipo", hint:"+🧠 mental, +📢 popularidad", fx:{mental:4,popularity:2}},
+      ]},
+    { q:"¿Qué sacrificaste para llegar hasta acá?",
+      choices:[
+        {label:"Hablás abiertamente de tu salud mental", hint:"+📢 popularidad, -🧠 mental leve", fx:{popularity:6,mental:-2}},
+        {label:"Preferís no entrar en detalles personales", hint:"+🧠 mental", fx:{mental:2}},
+        {label:"Hablás del tiempo perdido con tu familia", hint:"+📢 popularidad", fx:{popularity:3,mental:-1}},
+      ]},
+    { q:"¿Cuál es tu objetivo para lo que queda de temporada?",
+      choices:[
+        {label:"'Vamos por todo, nada menos'", hint:"+📢 popularidad, -🧠 mental leve", fx:{popularity:5,mental:-1}},
+        {label:"'Un paso a la vez, sin apurar nada'", hint:"+🧠 mental", fx:{mental:3}},
+        {label:"'Mejorar como jugador/a, el resultado viene solo'", hint:"+🧭 game sense", fx:{gameSense:3}},
+      ]},
+    { q:"¿Qué opinás de tu próximo rival?",
+      choices:[
+        {label:"Los picanteás un poco para generar hype", hint:"+📢 popularidad, -🤝 química", fx:{popularity:5,chemistry:-2}},
+        {label:"Les tenés respeto y lo decís", hint:"+🤝 química", fx:{chemistry:3}},
+        {label:"No decís nada, 'que hable el server'", hint:"+🧠 mental", fx:{mental:2}},
+      ]},
+    { q:"¿Cómo es un día normal de entrenamiento para vos?",
+      choices:[
+        {label:"Contás una rutina brutal de muchas horas", hint:"+🧭 game sense, -🧠 mental leve", fx:{gameSense:3,mental:-1}},
+        {label:"Hablás de un balance entre práctica y descanso", hint:"+🧠 mental", fx:{mental:3}},
+        {label:"Bromeás y no das mucho detalle", hint:"+📢 popularidad leve", fx:{popularity:2}},
+      ]},
+  ];
+
+  // La inflación de la tienda tiene DOS componentes:
+  // 1) GLOBAL por compras: cada compra (de cualquier ítem) sube el precio de
+  //    TODOS los ítems, no solo el que se compró (state.shopPurchasesTotal).
+  // 2) Por PLATA: además, cada ítem suma un recargo proporcional a la plata
+  //    que tenés acumulada en tu mejor momento (state.peakMoney), para que los
+  //    precios no se queden "baratos" cuando ya estás manejando premios
+  //    grandes. moneyFactor es el % de esa plata que se suma al costo base.
+  const SHOP_INFLATION = 1.16;
+
   const SHOP_ITEMS = [
-    { id:"psych", name:"🧑‍⚕️ Sesión con psicólogo deportivo", cost:150, costMult:1.7, max:3, fx:{mental:15} },
-    { id:"coach", name:"📋 Coach personalizado", cost:180, costMult:1.7, max:3, fx:{gameSense:10} },
-    { id:"gear",  name:"🖱️ Setup gamer premium", cost:120, costMult:1.7, max:3, fx:{aim:8} },
-    { id:"editor",name:"🎬 Editor de highlights", cost:100, costMult:1.7, max:3, fx:{popularity:10} },
-    { id:"team",  name:"🤝 Team building con el equipo", cost:140, costMult:1.7, max:3, fx:{chemistry:12} },
-    { id:"vacay", name:"🏖️ Vacaciones forzadas", cost:90, costMult:1.7, max:3, fx:{mental:8,aim:-3}, note:"te oxidás un poco" },
+    { id:"psych", name:"🧑‍⚕️ Sesión con psicólogo deportivo", cost:150, max:3, fx:{mental:15}, moneyFactor:0.07 },
+    { id:"coach", name:"📋 Coach personalizado", cost:180, max:3, fx:{gameSense:10}, moneyFactor:0.08 },
+    // "Setup gamer premium" es algo de etapas tempranas (armar tu primer setup
+    // en serio). Una vez que ya sos pro con equipo/sponsors (stage 3+:
+    // Challengers en adelante) ya no tiene sentido que te lo ofrezcan en la
+    // tienda, así que se oculta a partir de ahí con maxStage.
+    { id:"gear",  name:"🖱️ Setup gamer premium", cost:120, max:3, fx:{aim:8}, maxStage:2, moneyFactor:0.06 },
+    { id:"editor",name:"🎬 Editor de highlights", cost:100, max:3, fx:{popularity:10}, moneyFactor:0.06 },
+    { id:"team",  name:"🤝 Team building con el equipo", cost:140, max:3, fx:{chemistry:12}, moneyFactor:0.07 },
+    { id:"vacay", name:"🏖️ Vacaciones forzadas", cost:90, max:3, fx:{mental:8,aim:-3}, note:"te oxidás un poco", moneyFactor:0.05 },
   ];
 
   const ACHIEVEMENTS = [
@@ -453,10 +523,15 @@
       rageBreaks: 0,
       usedEventIds: new Set(),
       shopPurchases: {},
+      shopPurchasesTotal: 0,
       burnedOut: false,
       ended: false,
       team: null,
       salary: 0,
+      kills: 0,
+      clutches: 0,
+      hospitalizations: 0,
+      peakMoney: 20,
     };
   }
 
@@ -638,6 +713,7 @@
 
   function renderHUD() {
     $("#hud-name").textContent = state.nickname;
+    state.peakMoney = Math.max(state.peakMoney || 0, state.money);
     const role = ROLES.find(r => r.id === state.role);
     $("#hud-role").textContent = `${role.name.toUpperCase()}${state.main ? " · " + state.main : ""}`;
     const stages = stagesFor(state.circuit);
@@ -646,6 +722,10 @@
     $("#hud-age").textContent = state.age;
     $("#hud-turn").textContent = state.turn;
     $("#hud-money").textContent = state.money;
+    const killsEl = $("#hud-kills");
+    if (killsEl) killsEl.textContent = state.kills || 0;
+    const clutchesEl = $("#hud-clutches");
+    if (clutchesEl) clutchesEl.textContent = state.clutches || 0;
     $("#btn-retire").style.display = state.age >= 30 ? "inline-block" : "none";
     renderTeamHud();
     renderStats();
@@ -733,6 +813,10 @@
     const eventCard = $("#event-card");
     let choices, logoHeaderTeam = null;
 
+    if (ev.dynamic === "interview") {
+      return renderInterview(ev);
+    }
+
     if (ev.dynamic === "teamOffer") {
       $("#event-tag").textContent = ev.tag;
       $("#event-text").textContent = ev.text;
@@ -806,6 +890,52 @@
     });
   }
 
+  // Sección de entrevista: 5 o 6 preguntas seguidas, elegidas al azar del
+  // banco INTERVIEW_QUESTIONS, cada una con sus propias opciones y efectos.
+  function renderInterview(ev) {
+    const existingHeader = $("#event-card").querySelector(".event-team-header");
+    if (existingHeader) existingHeader.remove();
+
+    const pool = INTERVIEW_QUESTIONS.slice();
+    const count = Math.min(pool.length, 5 + (Math.random() < 0.5 ? 1 : 0)); // 5 o 6
+    const selected = [];
+    while (selected.length < count && pool.length) {
+      const i = Math.floor(Math.random() * pool.length);
+      selected.push(pool.splice(i, 1)[0]);
+    }
+
+    let idx = 0;
+
+    function showQuestion() {
+      if (idx >= selected.length) {
+        addLog(`🎤 <b>ENTREVISTA:</b> Terminaste la nota de prensa.`);
+        renderHUD();
+        return nextTurn();
+      }
+      const q = selected[idx];
+      $("#event-tag").textContent = `${ev.tag} · PREGUNTA ${idx + 1}/${selected.length}`;
+      $("#event-text").textContent = (idx === 0 ? ev.text + " " : "") + q.q;
+      const choicesDiv = $("#event-choices");
+      choicesDiv.innerHTML = "";
+      q.choices.forEach(c => {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        const hintText = fxToHint(c.fx);
+        btn.innerHTML = `<span class="c-label-wrap"><span class="c-label">${c.label}</span><span class="c-hint">${hintText}</span></span>`;
+        btn.addEventListener("click", () => {
+          applyEffects(c.fx);
+          addLog(`🎤 <i>"${q.q}"</i> → ${c.label}`);
+          renderHUD();
+          idx++;
+          showQuestion();
+        });
+        choicesDiv.appendChild(btn);
+      });
+    }
+
+    showQuestion();
+  }
+
   function renderSingleContinue(tag, text, onContinue, btnLabel) {
     const existingHeader = $("#event-card").querySelector(".event-team-header");
     if (existingHeader) existingHeader.remove();
@@ -832,17 +962,27 @@
 
     renderHUD();
 
-    // condiciones de retiro forzado
+    // salud mental en 0: te internan. No es un final automático — si te
+    // recuperás bien podés seguir jugando. Si te pasa una tercera vez, ahí sí
+    // se acabó: el cuerpo y la cabeza ya no dan para más.
     if (state.stats.mental <= 0) {
-      state.burnedOut = true;
-      // 1 en 10: la presión te pasa una factura mucho más grande que un simple retiro
-      if (Math.random() < 0.1) {
-        return endGame("crisis");
+      state.hospitalizations = (state.hospitalizations || 0) + 1;
+      if (state.hospitalizations >= 3) {
+        state.burnedOut = true;
+        return endGame("burnout");
       }
-      return endGame("burnout");
+      return triggerHospitalization();
     }
+
+    // a partir de los 35 el cuerpo ya no acompaña como antes, pero si
+    // llegaste con la cabeza sana podés seguir compitiendo — el retiro ya no
+    // es automático, solo si además venís mal de salud mental.
     if (state.age >= 35) {
-      return endGame("age_limit");
+      if (state.stats.mental < 40) {
+        return endGame("age_limit");
+      }
+      state.stats.aim = clamp(state.stats.aim - 2);
+      addLog(`⌛ A los ${state.age} los reflejos ya no son los mismos, pero la cabeza te sostiene y seguís compitiendo.`);
     }
 
     // torneo cada 5 turnos
@@ -862,6 +1002,10 @@
     const s = state.stats;
     const score = s.rating * 0.4 + s.aim * 0.3 + s.gameSense * 0.2 + s.chemistry * 0.1 + (Math.random() * 30 - 15);
     let text, success;
+    // Kills del torneo: una cifra de sabor derivada del aim/rating, más alta
+    // si ganás. No hay simulación de rondas, es una estimación de "cómo te
+    // fue en el server" para alimentar el contador de kills del final.
+    const baseKills = Math.round(6 + s.aim / 8 + Math.random() * 8);
     if (state.stage >= 5) {
       // defensa de título en la cima del circuito
       success = score >= 90;
@@ -870,12 +1014,15 @@
         state.stats.rating = clamp(state.stats.rating + 5);
         const prize = Math.round(stg.purse * 0.15);
         state.money += prize;
-        text = `${stg.name.toUpperCase()}: defendiste el título. Tu equipo vuelve a levantar el trofeo, tu nombre suena en toda la escena y te llevás $${prize} de la bolsa de premios.`;
+        const kills = baseKills + 6;
+        state.kills = (state.kills || 0) + kills;
+        text = `${stg.name.toUpperCase()}: defendiste el título. Tu equipo vuelve a levantar el trofeo, tu nombre suena en toda la escena y te llevás $${prize} de la bolsa de premios. Cerrás el torneo con ${kills} kills.`;
       } else {
         state.stats.mental = clamp(state.stats.mental - 5);
         const prize = Math.round(stg.purse * 0.03) + 100;
         state.money += prize;
-        text = `${stg.name.toUpperCase()}: quedaste eliminada/o en fase de grupos esta vez. Duele, pero ya estás entre los mejores del circuito. Te llevás $${prize}.`;
+        state.kills = (state.kills || 0) + baseKills;
+        text = `${stg.name.toUpperCase()}: quedaste eliminada/o en fase de grupos esta vez. Duele, pero ya estás entre los mejores del circuito. Te llevás $${prize} y sumás ${baseKills} kills.`;
       }
     } else {
       success = score >= stg.threshold;
@@ -887,12 +1034,15 @@
         const newStg = stages[state.stage];
         const prize = Math.round(newStg.purse * 0.08) + 150 * state.stage;
         state.money += prize;
-        text = `TORNEO: tu equipo avanza de nivel. Ahora estás en: ${stages[state.stage].name} — te llevás $${prize} de premio.`;
+        const kills = baseKills + 4;
+        state.kills = (state.kills || 0) + kills;
+        text = `TORNEO: tu equipo avanza de nivel. Ahora estás en: ${stages[state.stage].name} — te llevás $${prize} de premio y sumás ${kills} kills.`;
       } else {
         state.stats.rating = clamp(state.stats.rating - 6);
         state.stats.mental = clamp(state.stats.mental - 6);
         state.money += 30;
-        text = `TORNEO: quedaste afuera esta vez. Toca seguir grindeando en ${stg.name}.`;
+        state.kills = (state.kills || 0) + baseKills;
+        text = `TORNEO: quedaste afuera esta vez. Toca seguir grindeando en ${stg.name}. Sumás ${baseKills} kills igual.`;
       }
     }
     addLog(`<b>TORNEO:</b> ${text}`);
@@ -900,14 +1050,55 @@
     renderSingleContinue("TORNEO", text, () => nextTurn());
   }
 
+  function triggerHospitalization() {
+    const existingHeader = $("#event-card").querySelector(".event-team-header");
+    if (existingHeader) existingHeader.remove();
+    const n = state.hospitalizations;
+    const texts = [
+      `La presión te pasa factura y terminás internada/o un tiempo en un centro psiquiátrico para descansar la cabeza. El equipo anuncia tu baja temporal, corre el rumor de "problemas personales" en redes, y por un rato el Valorant queda en pausa para vos.`,
+      `Es la segunda vez que tu cabeza te manda a un psiquiátrico. La escena empieza a hablar más de tu salud que de tu juego. Si esto pasa una vez más, no vas a poder sostener la carrera.`,
+    ];
+    const text = texts[Math.min(n - 1, texts.length - 1)];
+    const recovered = 30 + Math.floor(Math.random() * 16); // 30-45
+    state.stats.mental = recovered;
+    state.stats.rating = clamp(state.stats.rating - 8);
+    state.stats.popularity = clamp(state.stats.popularity - 5);
+    // La recuperación no es instantánea: pasan 3 años (6 turnos) internada/o
+    // y lejos de la competencia antes de volver a la escena.
+    const ageBefore = state.age;
+    state.turn += 6;
+    state.age = 16 + Math.floor(state.turn / 2);
+    const agedText = ` Pasás 3 años internada/o recuperándote — volvés a los ${state.age} (tenías ${ageBefore}).`;
+    let teamNote = "";
+    if (state.team && Math.random() < 0.35) {
+      teamNote = ` <b>${state.team}</b> te baja del roster mientras te recuperás.`;
+      state.team = null;
+      state.salary = 0;
+    }
+    addLog(`🏥 <b>INTERNACIÓN (${n}/3):</b> ${text}${agedText}${teamNote}`);
+    renderHUD();
+    renderSingleContinue(
+      "SALUD MENTAL",
+      `${text}${agedText}${teamNote} Volvés a la escena con la salud mental en ${recovered}. Si te vuelve a pasar dos veces más, ahí sí se termina la carrera.`,
+      () => nextTurn(),
+      "Volver a la escena"
+    );
+  }
+
   function triggerReflex() {
     const existingHeader = $("#event-card").querySelector(".event-team-header");
     if (existingHeader) existingHeader.remove();
+    // El clutch varía entre 1 y 3 rounds — cuantos más enemigos te queden por
+    // eliminar en el 1vX, más objetivos seguidos vas a tener que acertar.
+    const rounds = 1 + Math.floor(Math.random() * 3); // 1, 2 o 3
+    const roundsText = rounds === 1
+      ? "Se te viene un 1v1. Cuando confirmes va a aparecer un círculo rojo — hacé click apenas lo veas."
+      : `Se te viene un 1v${rounds}. Cuando confirmes vas a tener que eliminar a los ${rounds} rivales que quedan, uno por uno: van a aparecer ${rounds} círculos rojos seguidos (con 1 segundo entre cada uno) — hacé click en cada uno apenas lo veas.`;
     renderSingleContinue(
       "MOMENTO CLUTCH",
-      "Se te viene un 1vX. Cuando confirmes, va a aparecer un círculo rojo en algún punto del cuadro del minijuego — hacé click apenas lo veas. Confirmá solo cuando estés list@.",
+      roundsText,
       () => {
-        openReflexModal(fx => {
+        openReflexModal(rounds, fx => {
           applyEffects(fx);
           renderHUD();
           renderSingleContinue("MOMENTO CLUTCH", fx.resultText, () => nextTurn());
@@ -921,64 +1112,105 @@
      MINIJUEGO DE REFLEJOS
   --------------------------------------------------------- */
 
-  function openReflexModal(onDone) {
+  // rounds: cuántos objetivos hay que acertar seguidos (1 a 3, uno por cada
+  // rival que queda en el 1vX). Aparecen de a uno, con 1 segundo de pausa
+  // entre el final de un round y el arranque del siguiente, y el texto de
+  // instrucciones muestra cuántos quedan.
+  function openReflexModal(rounds, onDone) {
     const modal = $("#reflex-modal");
     const field = $("#reflex-field");
     const target = $("#reflex-target");
     const result = $("#reflex-result");
+    const instructions = $("#reflex-instructions");
     result.textContent = "";
     target.style.display = "none";
     modal.classList.add("active");
 
-    const delay = 400 + Math.random() * 900;
-    let appeared = 0;
-    let timeoutMiss;
+    const outcomes = []; // reactionMs por round, o null si falló
 
-    setTimeout(() => {
-      const maxX = field.clientWidth - 46;
-      const maxY = field.clientHeight - 46;
-      target.style.left = Math.random() * maxX + "px";
-      target.style.top = Math.random() * maxY + "px";
-      target.style.display = "block";
-      appeared = performance.now();
+    function playRound(roundNum) {
+      instructions.textContent = rounds > 1
+        ? `Rival ${roundNum}/${rounds} — hacé click en el objetivo apenas aparezca.`
+        : "Hacé click en el objetivo apenas aparezca.";
 
-      const onClick = () => {
-        const reactionMs = performance.now() - appeared;
-        clearTimeout(timeoutMiss);
-        target.style.display = "none";
-        target.removeEventListener("click", onClick);
-        finish(reactionMs);
-      };
-      target.addEventListener("click", onClick);
+      const delay = 400 + Math.random() * 700;
+      setTimeout(() => {
+        const maxX = field.clientWidth - 46;
+        const maxY = field.clientHeight - 46;
+        target.style.left = Math.random() * maxX + "px";
+        target.style.top = Math.random() * maxY + "px";
+        target.style.display = "block";
+        const appeared = performance.now();
+        let timeoutMiss;
 
-      timeoutMiss = setTimeout(() => {
-        target.removeEventListener("click", onClick);
-        target.style.display = "none";
-        finish(null);
-      }, 900);
-    }, delay);
+        const onClick = () => {
+          const reactionMs = performance.now() - appeared;
+          clearTimeout(timeoutMiss);
+          target.style.display = "none";
+          target.removeEventListener("click", onClick);
+          outcomes.push(reactionMs);
+          advance(roundNum);
+        };
+        target.addEventListener("click", onClick);
 
-    function finish(reactionMs) {
-      let fx, msg;
-      if (reactionMs === null) {
-        fx = { aim: -5, mental: -2 };
-        msg = "Reaccionaste tarde. El clutch se te escapa.";
-      } else if (reactionMs < 300) {
-        fx = { aim: 8, rating: 4 };
-        msg = `Reflejos de otro nivel (${Math.round(reactionMs)}ms). Clutch conseguido.`;
-      } else if (reactionMs < 550) {
-        fx = { aim: 4, rating: 2 };
-        msg = `Buena reacción (${Math.round(reactionMs)}ms). Ganás la ronda.`;
+        timeoutMiss = setTimeout(() => {
+          target.removeEventListener("click", onClick);
+          target.style.display = "none";
+          outcomes.push(null);
+          advance(roundNum);
+        }, 900);
+      }, delay);
+    }
+
+    function advance(roundNum) {
+      if (roundNum < rounds) {
+        instructions.textContent = `Quedan ${rounds - roundNum} rival${rounds - roundNum === 1 ? "" : "es"}... preparate.`;
+        setTimeout(() => playRound(roundNum + 1), 1000); // 1 segundo entre cada objetivo
       } else {
-        fx = { aim: 1 };
-        msg = `Llegaste justo (${Math.round(reactionMs)}ms). Ronda pareja.`;
+        finish();
       }
-      fx.resultText = `${msg} (${fxToHint(fx)})`;
-      result.textContent = fx.resultText;
+    }
+
+    playRound(1);
+
+    function finish() {
+      const totalFx = {};
+      const msgs = [];
+      let hits = 0, kills = 0;
+      outcomes.forEach((reactionMs, i) => {
+        const label = rounds > 1 ? `Rival ${i + 1}: ` : "";
+        let fx, msg, k;
+        if (reactionMs === null) {
+          fx = { aim: -5, mental: -2 }; msg = `${label}reaccionaste tarde, se te escapa.`; k = 0;
+        } else if (reactionMs < 300) {
+          fx = { aim: 8, rating: 4 }; msg = `${label}reflejos de otro nivel (${Math.round(reactionMs)}ms).`; k = 3; hits++;
+        } else if (reactionMs < 550) {
+          fx = { aim: 4, rating: 2 }; msg = `${label}buena reacción (${Math.round(reactionMs)}ms).`; k = 2; hits++;
+        } else {
+          fx = { aim: 1 }; msg = `${label}llegaste justo (${Math.round(reactionMs)}ms).`; k = 1; hits++;
+        }
+        kills += k;
+        msgs.push(msg);
+        for (const key in fx) totalFx[key] = (totalFx[key] || 0) + fx[key];
+      });
+      // Se promedia el efecto sobre stats para que un clutch de 3 no escale
+      // el triple que uno de 1, pero sí pese más.
+      const scale = Math.max(1, rounds * 0.7);
+      for (const key in totalFx) totalFx[key] = Math.round(totalFx[key] / scale);
+
+      state.clutches = (state.clutches || 0) + hits;
+      state.kills = (state.kills || 0) + kills;
+
+      const clutchWon = hits === rounds;
+      const headline = rounds > 1
+        ? (clutchWon ? `¡CLUTCH GANADO! Eliminaste a los ${rounds} rivales.` : `Clutch fallido: solo ${hits}/${rounds}.`)
+        : (clutchWon ? "¡Ronda ganada!" : "Ronda perdida.");
+      totalFx.resultText = `${headline} ${msgs.join(" ")} (+${kills} kills)`;
+      result.textContent = totalFx.resultText;
       setTimeout(() => {
         modal.classList.remove("active");
-        onDone(fx);
-      }, 900);
+        onDone(totalFx);
+      }, 1100);
     }
   }
 
@@ -990,9 +1222,23 @@
     $("#shop-money").textContent = state.money;
     const grid = $("#shop-grid");
     grid.innerHTML = "";
-    SHOP_ITEMS.forEach(item => {
+    // Inflación global: sube con CADA compra de CUALQUIER ítem, no solo con
+    // las compras del ítem puntual. Así toda la tienda se va poniendo más
+    // cara a medida que gastás plata en ella.
+    const inflation = Math.pow(SHOP_INFLATION, state.shopPurchasesTotal || 0);
+    // Recargo por plata: se toma el mayor monto que tuviste en el bolsillo
+    // (state.peakMoney), no la plata que tenés en este instante, para que no
+    // se pueda "hacer trampa" gastando todo antes de entrar a la tienda.
+    const wealth = Math.max(state.peakMoney || 0, state.money);
+    const visibleItems = SHOP_ITEMS.filter(item => item.maxStage == null || state.stage <= item.maxStage);
+    if (!visibleItems.length) {
+      grid.innerHTML = `<p style="color:var(--muted);font-size:13px;">No hay nada nuevo para vos en la tienda por ahora.</p>`;
+      return;
+    }
+    visibleItems.forEach(item => {
       const bought = state.shopPurchases[item.id] || 0;
-      const currentCost = Math.round(item.cost * Math.pow(item.costMult || 1, bought));
+      const moneySurcharge = Math.round(wealth * (item.moneyFactor || 0));
+      const currentCost = Math.round(item.cost * inflation) + moneySurcharge;
       const div = document.createElement("div");
       div.className = "shop-item";
       const disabled = bought >= item.max || state.money < currentCost;
@@ -1003,8 +1249,9 @@
         if (state.money < currentCost || bought >= item.max) return;
         state.money -= currentCost;
         state.shopPurchases[item.id] = bought + 1;
+        state.shopPurchasesTotal = (state.shopPurchasesTotal || 0) + 1;
         applyEffects(item.fx);
-        addLog(`<b>TIENDA:</b> compraste "${item.name}" por $${currentCost}.`);
+        addLog(`<b>TIENDA:</b> compraste "${item.name}" por $${currentCost}. Los precios de la tienda suben un poco.`);
         renderHUD();
         renderShop();
       });
@@ -1035,9 +1282,10 @@
       retired_voluntary: "COLGASTE EL MOUSE",
     };
     const summaries = {
-      burnout: `A los ${state.age} tu cabeza dice basta, y no hay rating ni título que la haga cambiar de opinión. Un día simplemente no te levantás para practicar. El equipo te reemplaza en dos semanas, los sponsors se bajan en un mes, y tu nombre desaparece de las transmisiones. Te vas de la escena entero, aunque no entendas todavía del todo qué fue lo que se rompió.`,
-      crisis: `A los ${state.age} el cuerpo y la cabeza dicen basta al mismo tiempo. Terminás internada/o, lejos de las pantallas, de los servers y de la presión. La escena sigue girando sin vos: se anuncia tu baja del roster, corre el rumor de "problemas personales", y por un buen tiempo tu nombre solo aparece en tuits de gente que se pregunta qué fue de tu carrera. Tu recuperación no tiene un marcador de progreso ni un timer — pasa en otro tiempo, uno que ningún torneo mide.`,
-      age_limit: "Los reflejos ya no acompañan como antes. Es momento de dejarle la mira a la próxima generación.",
+      burnout: `A los ${state.age}, después de tres internaciones, tu cabeza dice basta y ya no hay forma de sostener la carrera. Esta vez la recuperación no tiene vuelta al server: el equipo te reemplaza, los sponsors se bajan, y tu nombre desaparece de las transmisiones. Te vas de la escena entero, aunque no entendas todavía del todo qué fue lo que se rompió.`,
+      age_limit: state.stats.mental < 40
+        ? `A los ${state.age}, con la cabeza tan castigada como el cuerpo, ya no te da para seguir compitiendo al nivel que exige la escena. Es momento de dejarle la mira a la próxima generación.`
+        : "Los reflejos ya no acompañan como antes. Es momento de dejarle la mira a la próxima generación.",
       retired_voluntary: `A los ${state.age} decidís que ya diste lo que tenías que dar. Cerrás tu carrera por tu cuenta.`,
     };
 
@@ -1053,6 +1301,8 @@
       ["Game sense", state.stats.gameSense], ["Química", state.stats.chemistry],
       ["Popularidad", state.stats.popularity], ["Salud mental", state.stats.mental],
       ["Plata", "$" + state.money], ["Títulos", state.tournamentWins],
+      ["Kills", state.kills || 0], ["Clutches", state.clutches || 0],
+      ["Internaciones", state.hospitalizations || 0],
       ["Equipo", state.team || "Free agent"],
     ];
     pairs.forEach(([l, v]) => {
